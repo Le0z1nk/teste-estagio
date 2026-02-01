@@ -205,7 +205,7 @@ Social - CNPJ - Modalidade - UF
 
 Uma chave única é criada combinando:
 
-    RegistroAns + RazaoSocial + valor
+    registroAns + razaoSocial + trimestre
 
 Se a chave já existir, a linha é ignorada.
 
