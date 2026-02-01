@@ -67,7 +67,7 @@ public class JoinArquivos {
 				String cnpj = cadastro[1];
 				String modalidade = cadastro[2];
 				String uf = cadastro[3];
-				String chaveUnica = registroAns + "-" + razaoSocial + "-" + valor;
+				String chaveUnica = registroAns + "-" + razaoSocial + "-" + trimestre;
 				if (jaProcessados.contains(chaveUnica))
 					continue;
 				
