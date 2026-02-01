@@ -50,11 +50,11 @@ public class JoinArquivos {
 		Set<String> jaProcessados = new HashSet<>();
 		try (BufferedReader reader = Files.newBufferedReader(despesasCsv, StandardCharsets.UTF_8);
 				BufferedWriter writer = Files.newBufferedWriter(output)) {
-			writer.write("RegistroAns,RazãoSocial,CNPJ,Modalidade,UF,Trimestre,Ano,ValorDespesas");
+			writer.write("RegistroAns;RazãoSocial;CNPJ;Modalidade;UF;Trimestre;Ano;ValorDespesas");
 			writer.newLine();
 			String linha = reader.readLine(); 
 			while ((linha = reader.readLine()) != null) {
-				String[] colunas = linha.split(",");
+				String[] colunas = linha.split(";");
 				String registroAns = colunas[0].trim();
 				String trimestre = colunas[2].trim();
 				String ano = colunas[3].trim();
@@ -72,7 +72,7 @@ public class JoinArquivos {
 					continue;
 				
 				jaProcessados.add(chaveUnica);
-				writer.write(String.join(",", registroAns, razaoSocial, cnpj, modalidade, uf, trimestre, ano, valor));
+				writer.write(String.join(";", registroAns, razaoSocial, cnpj, modalidade, uf, trimestre, ano, valor));
 				writer.newLine();
 			}
 		}
@@ -83,7 +83,7 @@ public class JoinArquivos {
 		try (BufferedReader reader = Files.newBufferedReader(joinCsv, StandardCharsets.UTF_8)) {
 			String linha = reader.readLine();
 			while ((linha = reader.readLine()) != null) {
-				String[] colunas = linha.split(",", -1); 
+				String[] colunas = linha.split(";"); 
 				if (colunas.length < 8)
 					continue;
 
@@ -116,7 +116,7 @@ public class JoinArquivos {
 		List<Map.Entry<String, Double>> listaOrdenada = new ArrayList<>(somaPorRazaoEUf.entrySet());
 		listaOrdenada.sort((a, b) -> Double.compare(b.getValue(), a.getValue()));
 		try (BufferedWriter writer = Files.newBufferedWriter(output)) {
-			writer.write("RazaoSocial,UF,ValorTotal,MediaDespesas,DesvioPadrão");
+			writer.write("RazaoSocial;UF;ValorTotal;MediaDespesas;DesvioPadrão");
 			writer.newLine();
 			for (var entry : listaOrdenada) {
 				String[] partes = entry.getKey().split("\\|");
@@ -126,7 +126,7 @@ public class JoinArquivos {
 			    List<Double> valores = valoresPorGrupo.get(entry.getKey());
 			    double media = calcularMedia(valores);
 			    double desvio = calcularDesvioPadrao(valores, media);
-				writer.write(String.join(",", razao, uf, String.format("%.2f", total).replace(",", "."), String.format("%.2f", media).replace(",", "."), String.format("%.2f", desvio).replace(",", ".")));
+				writer.write(String.join(";", razao, uf, String.format("%.2f", total).replace(",", "."), String.format("%.2f", media).replace(",", "."), String.format("%.2f", desvio).replace(",", ".")));
 				writer.newLine();
 			}
 		}

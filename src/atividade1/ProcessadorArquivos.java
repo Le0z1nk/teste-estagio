@@ -71,10 +71,10 @@ public class ProcessadorArquivos {
         Path output = Paths.get("resultado/consolidado_despesas.csv");
         Files.createDirectories(output.getParent());
         try (BufferedWriter writer = Files.newBufferedWriter(output)) {
-            writer.write("CNPJ,RazaoSocial,Trimestre,Ano,ValorDespesas");
+            writer.write("CNPJ;RazaoSocial;Trimestre;Ano;ValorDespesas");
             writer.newLine();
             for (String[] linha : registrosFinais) {
-                writer.write(String.join(",", linha));
+                writer.write(String.join(";", linha));
                 writer.newLine();
             }
         }
