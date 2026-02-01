@@ -278,3 +278,189 @@ listaOrdenada.sort((a, b) -> Double.compare(b.getValue(), a.getValue()));
 - Maiores valores aparecem primeiro
 
 ---
+
+# Atividade 3
+
+Este código sql utiliza duas tabelas principais para análise de despesas de
+operadoras:
+
+-   `dados_operadoras` --- tabela de dados detalhados
+-   `despesas_agregadas` --- tabela de dados agregados
+
+A estrutura foi pensada para equilibrar **integridade dos dados**,
+**volume esperado**, **performance** e **eficiência em consultas
+analíticas**.
+
+------------------------------------------------------------------------
+
+## Estrutura das Tabelas
+
+### Tabela `dados_operadoras`
+
+Armazena os registros detalhados por operadora, trimestre e ano.
+
+### Tabela `despesas_agregadas`
+
+Armazena métricas estatísticas resumidas por operadora e estado
+
+------------------------------------------------------------------------
+
+## Por que `dados_operadoras` é normalizada?
+
+A tabela segue os princípios fundamentais da normalização:
+
+### Dados atômicos (1FN)
+
+Cada linha representa **um único evento temporal**: - Uma operadora - Um
+trimestre - Um valor de despesa
+
+### Sem campos derivados
+
+Os valores armazenados são **dados primários**, não cálculos.
+
+### Integridade e consistência
+
+Os dados permitem: - Reprocessamento estatístico - Auditoria -
+Recalcular agregações sem perda de informação
+
+### Adequada ao volume esperado
+
+Essa tabela pode crescer bastante ao longo do tempo, mas: - Permite
+**indexação eficiente** - Mantém **boa escalabilidade** - Suporta
+análises históricas completas
+
+------------------------------------------------------------------------
+
+##  Por que `despesas_agregadas` é desnormalizada?
+
+A tabela contém **dados derivados**, que poderiam ser recalculados a
+partir da tabela principal:
+
+### Armazena valores agregados
+
+-   `valor_total` → soma
+-   `media` → média estatística
+-   `desvio_padrao` → cálculo estatístico
+
+Esses valores **não são dados primários**, mas **resultados de
+processamento**.
+
+### Objetivo da desnormalização
+
+A desnormalização foi adotada para:
+
+-   Reduzir **complexidade de queries analíticas**
+-   Melhorar **tempo de resposta em relatórios**
+-   Evitar **reprocessamento pesado** sobre grandes volumes de dados
+-   Facilitar **dashboards e análises frequentes**
+
+------------------------------------------------------------------------
+
+## Impacto no Volume de Dados
+
+### `dados_operadoras`
+
+-   Crescimento contínuo ao longo do tempo
+-   Maior volume
+-   Ideal para **consultas detalhadas e auditoria**
+
+### `despesas_agregadas`
+
+-   Volume menor
+-   Atualização periódica
+-   Ideal para **consultas rápidas e sumarizadas**
+
+Essa separação melhora **performance geral** do sistema.
+
+------------------------------------------------------------------------
+
+## Impacto na Complexidade das Queries
+
+### 🔹 Sem tabela agregada:
+
+Consultas analíticas exigiriam: - `GROUP BY` extensos - Funções
+estatísticas frequentes - Maior custo computacional
+
+### 🔹 Com tabela agregada:
+
+-   Queries mais **simples**
+-   Menos custo de processamento
+-   Melhor **legibilidade**
+-   Melhor **tempo de resposta**
+
+------------------------------------------------------------------------
+
+## Justificativa Arquitetura
+
+O modelo adota um padrão comum em **ambientes analíticos**:
+
+-   **Tabela normalizada** → dados base confiáveis (fonte da verdade)
+-   **Tabela desnormalizada** → otimização para análise e relatórios
+
+------------------------------------------------------------------------
+
+## Conclusão
+
+-   A tabela `dados_operadoras` prioriza **integridade e
+    rastreabilidade**
+-   A tabela `despesas_agregadas` prioriza **performance e simplicidade
+    analítica**
+
+Esse equilíbrio torna o modelo **eficiente, escalável e adequado ao
+volume de dados esperado**.
+
+------------------------------------------------------------------------
+
+## Tipos de dados
+
+Foi usado DECIMAL para valores monetários e VARCHAR para datas
+
+------------------------------------------------------------------------
+
+### Justificativa
+
+DECIMAL:
+- Armazena números exatamente
+- Ideal para valores financeiros
+- Sem erro de arredondamento inesperado
+- Mais seguro para dados críticos
+
+VARCHAR:
+Já que foi apenas usado a coluna ano, não é preciso usar DATE ou TIMESTAMP
+
+------------------------------------------------------------------------
+
+## Querys Analiticas
+
+### Query 1
+
+A query 1 trata das operadoras sem todos os trimestres do seguinte modo:
+- Usa o primeiro trimestre disponível
+- Usa o último trimestre disponível
+- Não exige sequência completa
+- Compara apenas os pontos existentes
+
+------------------------------------------------------------------------
+
+### Query 3
+
+A query 3 foi resolvida do seguinte modo:
+- Subquery calcula a média geral
+```sql
+SELECT AVG(media) FROM despesas_agregadas
+```
+- Filtra registros acima dessa média
+```sql
+WHERE d.valor_despesas > WHERE d.valor_despesas > (
+        SELECT AVG(media)
+        FROM despesas_agregadas
+    )
+```
+- Conta em quantos trimestres cada operadora passou da média
+```sql
+COUNT(*) AS trimestres_acima_media
+```
+- Retorna apenas operadoras com ≥ 2 trimestres acima
+```sql
+WHERE trimestres_acima_media >= 2
+```
